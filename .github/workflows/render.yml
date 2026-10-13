@@ -5,8 +5,6 @@ on:
       scale:
         description: "Output scale (1 = 1080p, 2 = 4K)"
         default: "1"
-  push:
-    branches: [main]
 jobs:
   render:
     runs-on: ubuntu-latest
