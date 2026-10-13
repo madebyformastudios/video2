@@ -17,7 +17,7 @@ export const Vignette: React.FC = () => (
   <AbsoluteFill
     style={{
       background:
-        "radial-gradient(ellipse at 50% 50%, rgba(14,18,28,0) 55%, rgba(0,0,0,0.5) 100%), linear-gradient(180deg, rgba(40,55,80,0.08), rgba(10,12,18,0.1))",
+        "radial-gradient(ellipse at 50% 50%, rgba(14,18,28,0) 62%, rgba(0,0,0,0.3) 100%)",
       pointerEvents: "none",
     }}
   />

@@ -171,10 +171,9 @@ def pos(f, f0, f1, x0, x1, kind):
     return x0 + (x1 - x0) * e
 
 
-passes = [  # (base, from, to, x0, x1, kind) in local frames of the take
-    (1560, 10, 170, 520, 910, "lin"), (1560, 180, 240, 560, 704, "lin"), (1560, 240, 300, 620, 764, "lin"),
-    (1560, 300, 360, 680, 824, "lin"), (1560, 360, 600, 500, 1130, "lin"), (1560, 600, 690, 760, 900, "out"),
-    (3930, 0, 180, 420, 880, "inout"), (3930, 300, 450, 880, 1160, "lin"),
+passes = [  # (base, from, to, x0, x1, kind) in local frames of the take (mirrors src/film/takes.tsx)
+    (1560, 0, 690, 0, 1656, "lin"), (1560, 690, 750, 1656, 1716, "out"),
+    (3930, 0, 170, 0, 408, "lin"), (3930, 170, 190, 408, 428, "out"), (3930, 300, 450, 428, 788, "lin"),
 ]
 if FOOTSTEPS:
     for base, f0, f1, x0, x1, kind in passes:
