@@ -2,14 +2,14 @@ import React from "react";
 import { theme } from "../theme";
 
 // Black silhouette, subtle brick edge tint, two dim ember eyes. No glow.
-export const Villain: React.FC<{ frame: number; scale?: number; kind?: "blob" | "hoodie" }> = ({ frame, scale = 1, kind = "blob" }) => {
+export const Villain: React.FC<{ frame: number; scale?: number; kind?: "blob" | "hoodie"; reach?: { x: number; y: number; side: "left" | "right" }; flip?: boolean }> = ({ frame, scale = 1, kind = "blob", reach, flip }) => {
   const sway = Math.sin(frame * 0.04) * 3;
   const edge = { stroke: theme.colors.brickDeep, strokeOpacity: 0.32, strokeWidth: 3 };
   const eye = { fill: theme.colors.brickDeep, opacity: 0.9 };
   if (kind === "hoodie") {
     // tall coat, high collar, brimmed hat
     return (
-      <svg width={240 * scale} height={500 * scale} viewBox="-120 -500 240 500" style={{ overflow: "visible" }}>
+      <svg width={240 * scale} height={500 * scale} viewBox="-120 -500 240 500" style={{ overflow: "visible", transform: flip ? "scaleX(-1)" : undefined }}>
         <g transform={`rotate(${sway * 0.3} 0 0)`}>
           <path d="M-62 -330 Q-70 -120 -74 0 L74 0 Q70 -120 62 -330 Q40 -372 0 -372 Q-40 -372 -62 -330Z" fill="#06070a" {...edge} />
           <ellipse cx={0} cy={-418} rx={42} ry={50} fill="#06070a" {...edge} />
@@ -17,8 +17,16 @@ export const Villain: React.FC<{ frame: number; scale?: number; kind?: "blob" | 
           <path d="M-48 -452 Q0 -512 48 -452Z" fill="#06070a" {...edge} />
           <ellipse cx={-15} cy={-416} rx={9} ry={3.8} {...eye} />
           <ellipse cx={15} cy={-416} rx={9} ry={3.8} {...eye} />
-          <line x1={-56} y1={-310} x2={-86} y2={-150 + sway} stroke="#06070a" strokeWidth={15} strokeLinecap="round" />
-          <line x1={56} y1={-310} x2={86} y2={-150 - sway} stroke="#06070a" strokeWidth={15} strokeLinecap="round" />
+          {reach?.side === "left" ? (
+            <path d={`M-56 -310 Q${(reach.x - 56) / 2 - 20} ${reach.y - 30} ${reach.x} ${reach.y}`} stroke="#06070a" strokeWidth={16} fill="none" strokeLinecap="round" />
+          ) : (
+            <line x1={-56} y1={-310} x2={-86} y2={-150 + sway} stroke="#06070a" strokeWidth={15} strokeLinecap="round" />
+          )}
+          {reach?.side === "right" ? (
+            <path d={`M56 -310 Q${(reach.x + 56) / 2 + 20} ${reach.y - 30} ${reach.x} ${reach.y}`} stroke="#06070a" strokeWidth={16} fill="none" strokeLinecap="round" />
+          ) : (
+            <line x1={56} y1={-310} x2={86} y2={-150 - sway} stroke="#06070a" strokeWidth={15} strokeLinecap="round" />
+          )}
         </g>
       </svg>
     );
