@@ -1,10 +1,11 @@
 import React from "react";
 import { AbsoluteFill, Audio, Img, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
-import { Hero } from "./components/Hero";
+import { Hero, CharacterKind } from "./components/Hero";
+import { heroWalk } from "./motion";
 import { Villain } from "./components/Villain";
 import { Hud } from "./components/Hud";
 import { Caption } from "./components/Caption";
-import { Grade, Grain, Vignette } from "./components/Overlays";
+import { Grain, Vignette } from "./components/Overlays";
 import { SceneFrame, Edge } from "./components/SceneFrame";
 import { handFont, theme } from "./theme";
 
@@ -14,12 +15,12 @@ const lerp = (t: number, a: number, b: number, from: number, to: number, ease = 
   interpolate(t, [from, to], [a, b], { ...C, easing: ease });
 
 type SceneDef = { from: number; dur: number; enter: Edge; exit: Edge };
-export const SCENES: Record<"A" | "B" | "C" | "D" | "E", SceneDef> = {
-  A: { from: 0, dur: 190, enter: { type: "black", frames: 24 }, exit: { type: "blur", frames: 20 } },
-  B: { from: 170, dur: 250, enter: { type: "blur", frames: 20 }, exit: { type: "none", frames: 0 } },
-  C: { from: 400, dur: 260, enter: { type: "push", frames: 22 }, exit: { type: "black", frames: 18 } },
-  D: { from: 660, dur: 240, enter: { type: "black", frames: 18 }, exit: { type: "none", frames: 0 } },
-  E: { from: 880, dur: 200, enter: { type: "iris", frames: 26 }, exit: { type: "black", frames: 20 } },
+// Transitions only where something actually changes: a time jump (fade through black)
+// and the move from story to title card (dissolve). The night shot is one continuous take.
+export const SCENES: Record<"N" | "D" | "E", SceneDef> = {
+  N: { from: 0, dur: 660, enter: { type: "black", frames: 24 }, exit: { type: "black", frames: 18 } },
+  D: { from: 660, dur: 240, enter: { type: "black", frames: 18 }, exit: { type: "blur", frames: 20 } },
+  E: { from: 880, dur: 200, enter: { type: "blur", frames: 20 }, exit: { type: "black", frames: 20 } },
 };
 export const TOTAL = 1080;
 
@@ -33,16 +34,17 @@ const dayAt = (t: number): [string, number] => {
   return ["DAY 101", 790];
 };
 
-type Cam = { z0: number; z1: number; ox: number; oy: number; px?: number };
+type Cam = { z0: number; z1: number; ox0: number; ox1: number; oy0: number; oy1: number };
 
-// Street plate + hero + villain share one camera so they stay anchored together.
-const Stage: React.FC<{ cam: Cam; dur: number; children: React.ReactNode }> = ({ cam, dur, children }) => {
+// Plate + characters share one camera so they stay anchored together.
+const Stage: React.FC<{ plate: string; cam: Cam; dur: number; children: React.ReactNode }> = ({ plate, cam, dur, children }) => {
   const f = useCurrentFrame();
   const z = lerp(f, cam.z0, cam.z1, 0, dur);
-  const px = lerp(f, 0, cam.px ?? 0, 0, dur);
+  const ox = lerp(f, cam.ox0, cam.ox1, 0, dur);
+  const oy = lerp(f, cam.oy0, cam.oy1, 0, dur);
   return (
-    <AbsoluteFill style={{ transform: `translateX(${px}px) scale(${z})`, transformOrigin: `${cam.ox}% ${cam.oy}%` }}>
-      <Img src={staticFile("plates/street-night-1080.jpeg")} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+    <AbsoluteFill style={{ transform: `scale(${z})`, transformOrigin: `${ox}% ${oy}%` }}>
+      <Img src={staticFile(plate)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       {children}
     </AbsoluteFill>
   );
@@ -52,76 +54,44 @@ const At: React.FC<{ x: number; y: number; children: React.ReactNode }> = ({ x, 
   <div style={{ position: "absolute", left: x, top: y, transform: "translate(-50%, -100%)" }}>{children}</div>
 );
 
-const SceneA: React.FC = () => {
-  const f = useCurrentFrame();
-  const t = f;
+const SceneNight: React.FC<{ ch: CharacterKind }> = ({ ch }) => {
+  const t = useCurrentFrame();
   const [day, dc] = dayAt(t);
-  const x = lerp(f, 780, 1010, 0, 190);
-  return (
-    <>
-      <Stage cam={{ z0: 1, z1: 1.07, ox: 50, oy: 70 }} dur={190}>
-        <At x={x} y={800}>
-          <Hero frame={f} walk={1} slouch={0} scale={1.05} />
-        </At>
-      </Stage>
-      <Hud day={day} dayChangedAt={dc} t={t} motivation={100} showBar />
-      <Caption text="This time, I mean it." start={50} end={160} t={t} />
-    </>
-  );
-};
-
-const SceneB: React.FC = () => {
-  const f = useCurrentFrame();
-  const t = f + SCENES.B.from;
-  const [day, dc] = dayAt(t);
-  const walk = lerp(t, 1, 0, 200, 330);
+  const w = heroWalk(t);
   const slouch = lerp(t, 0, 1, 280, 380);
   const motivation = lerp(t, 100, 0, 185, 340);
+  const rise = spring({ frame: t - 440, fps: theme.size.fps, config: theme.spring.soft });
   return (
     <>
-      <Stage cam={{ z0: 1.12, z1: 1.24, ox: 62, oy: 62, px: -30 }} dur={250}>
-        <At x={1010} y={815}>
-          <Hero frame={t} walk={walk} slouch={slouch} scale={1.1} />
+      <Stage plate="plates/street-night-1080.jpeg" cam={{ z0: 1.0, z1: 1.3, ox0: 45, ox1: 52, oy0: 70, oy1: 80 }} dur={660}>
+        {rise > 0.001 && (
+          <div style={{ position: "absolute", inset: 0, opacity: rise, transform: `translateY(${(1 - rise) * 40}px)` }}>
+            <At x={800} y={835}>
+              <Villain frame={t} scale={0.98} kind={ch} />
+            </At>
+          </div>
+        )}
+        <At x={w.x} y={815}>
+          <Hero frame={t} dist={w.dist} speed={w.speed} slouch={slouch} scale={1.1} character={ch} />
         </At>
       </Stage>
       <Hud day={day} dayChangedAt={dc} t={t} motivation={motivation} showBar />
+      <Caption text="This time, I mean it." start={50} end={160} t={t} />
+      <Caption text="Come back when you feel it." start={500} end={638} t={t} color={theme.colors.brick} />
     </>
   );
 };
 
-const SceneC: React.FC = () => {
-  const f = useCurrentFrame();
-  const t = f + SCENES.C.from;
-  const [day, dc] = dayAt(t);
-  const rise = spring({ frame: f - 40, fps: theme.size.fps, config: theme.spring.soft });
-  return (
-    <>
-      <Stage cam={{ z0: 1.28, z1: 1.4, ox: 52, oy: 80 }} dur={260}>
-        <div style={{ position: "absolute", inset: 0, opacity: rise, transform: `translateY(${(1 - rise) * 40}px)` }}>
-          <At x={800} y={835}>
-            <Villain frame={t} scale={0.98} />
-          </At>
-        </div>
-        <At x={1010} y={835}>
-          <Hero frame={t} walk={0} slouch={1} scale={1.1} />
-        </At>
-      </Stage>
-      <Hud day={day} dayChangedAt={dc} t={t} motivation={0} showBar />
-      <Caption text="Come back when you feel it." start={100} end={238} t={f} color={theme.colors.brick} />
-    </>
-  );
-};
-
-const SceneD: React.FC = () => {
+const SceneDawn: React.FC<{ ch: CharacterKind }> = ({ ch }) => {
   const f = useCurrentFrame();
   const t = f + SCENES.D.from;
   const [day, dc] = dayAt(t);
-  const x = lerp(f, 860, 1080, 0, 240);
+  const w = heroWalk(t);
   return (
     <>
-      <Stage cam={{ z0: 1.0, z1: 1.09, ox: 40, oy: 72, px: 20 }} dur={240}>
-        <At x={x} y={805}>
-          <Hero frame={t} walk={1} slouch={0} band scale={1.05} />
+      <Stage plate="plates/street-dawn-1080.jpeg" cam={{ z0: 1.0, z1: 1.09, ox0: 40, ox1: 48, oy0: 72, oy1: 72 }} dur={240}>
+        <At x={w.x} y={805}>
+          <Hero frame={t} dist={w.dist} speed={w.speed} slouch={0} band scale={1.1} character={ch} />
         </At>
       </Stage>
       <Hud day={day} dayChangedAt={dc} t={t} motivation={0} showBar />
@@ -152,29 +122,30 @@ const SceneE: React.FC = () => {
   );
 };
 
-const scenes: [keyof typeof SCENES, React.FC][] = [
-  ["A", SceneA],
-  ["B", SceneB],
-  ["C", SceneC],
-  ["D", SceneD],
-  ["E", SceneE],
-];
+export const makeShort = (ch: CharacterKind): React.FC => () => {
+  const list: [keyof typeof SCENES, React.ReactNode][] = [
+    ["N", <SceneNight ch={ch} />],
+    ["D", <SceneDawn ch={ch} />],
+    ["E", <SceneE />],
+  ];
+  return (
+    <AbsoluteFill style={{ background: theme.colors.ink }}>
+      {list.map(([k, node]) => {
+        const sc = SCENES[k];
+        return (
+          <Sequence key={k} from={sc.from} durationInFrames={sc.dur}>
+            <SceneFrame duration={sc.dur} enter={sc.enter} exit={sc.exit}>
+              {node}
+            </SceneFrame>
+          </Sequence>
+        );
+      })}
+      <Vignette />
+      <Grain />
+      <Audio src={staticFile("audio/score.wav")} />
+    </AbsoluteFill>
+  );
+};
 
-export const Short: React.FC = () => (
-  <AbsoluteFill style={{ background: theme.colors.ink }}>
-    {scenes.map(([k, Comp]) => {
-      const s = SCENES[k];
-      return (
-        <Sequence key={k} from={s.from} durationInFrames={s.dur}>
-          <SceneFrame duration={s.dur} enter={s.enter} exit={s.exit}>
-            <Comp />
-          </SceneFrame>
-        </Sequence>
-      );
-    })}
-    <Grade />
-    <Vignette />
-    <Grain />
-    <Audio src={staticFile("audio/score.wav")} />
-  </AbsoluteFill>
-);
+export const Short = makeShort("blob");
+export const ShortB = makeShort("hoodie");

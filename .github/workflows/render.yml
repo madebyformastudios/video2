@@ -5,10 +5,17 @@ on:
       scale:
         description: "Output scale (1 = 1080p, 2 = 4K)"
         default: "1"
+  push:
+    branches: [main]
 jobs:
   render:
+    # Pushes only render when the commit message contains [render]
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[render]')
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    strategy:
+      matrix:
+        comp: [Short, ShortB]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -17,8 +24,8 @@ jobs:
       - run: npm ci || npm install
       - run: python3 scripts/make_audio.py
       - name: Render
-        run: npx remotion render src/index.ts Short out/short.mp4 --codec h264 --crf 17 --scale=${{ github.event.inputs.scale || '1' }} --concurrency=100%
+        run: npx remotion render src/index.ts ${{ matrix.comp }} out/${{ matrix.comp }}.mp4 --codec h264 --crf 17 --scale=${{ github.event.inputs.scale || '1' }} --concurrency=100%
       - uses: actions/upload-artifact@v7
         with:
-          name: short
-          path: out/short.mp4
+          name: ${{ matrix.comp }}
+          path: out/${{ matrix.comp }}.mp4
