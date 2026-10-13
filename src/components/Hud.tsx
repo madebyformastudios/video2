@@ -12,7 +12,7 @@ export const Hud: React.FC<{ day: string; dayChangedAt: number; t: number; motiv
   const k = interpolate(t - dayChangedAt, [0, 14], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: theme.ease.out });
   const fill = interpolateColors(motivation, [0, 40, 100], [theme.colors.brickDeep, theme.colors.gold, theme.colors.gold]);
   return (
-    <div style={{ position: "absolute", left: 110, top: 84, fontFamily: handFont, color: theme.colors.text, textShadow: "0 2px 10px rgba(0,0,0,0.6)" }}>
+    <div style={{ position: "absolute", left: 110, top: 84, fontFamily: handFont, color: theme.colors.text, textShadow: "none" }}>
       <div style={{ fontSize: 52, letterSpacing: 4, color: theme.colors.gold, opacity: k, transform: `translateY(${(1 - k) * 18}px)` }}>{day}</div>
       {showBar && (
         <div style={{ marginTop: 14 }}>

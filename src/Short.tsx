@@ -42,7 +42,7 @@ const Stage: React.FC<{ cam: Cam; dur: number; children: React.ReactNode }> = ({
   const px = lerp(f, 0, cam.px ?? 0, 0, dur);
   return (
     <AbsoluteFill style={{ transform: `translateX(${px}px) scale(${z})`, transformOrigin: `${cam.ox}% ${cam.oy}%` }}>
-      <Img src={staticFile("plates/street-night.jpeg")} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      <Img src={staticFile("plates/street-night-1080.jpeg")} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       {children}
     </AbsoluteFill>
   );

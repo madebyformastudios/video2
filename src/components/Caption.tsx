@@ -29,7 +29,7 @@ export const Caption: React.FC<{ text: string; start: number; end: number; t: nu
                 color,
                 opacity: s,
                 transform: `translateY(${(1 - s) * 16}px)`,
-                textShadow: "0 2px 12px rgba(0,0,0,0.65)",
+                
               }}
             >
               {w}
