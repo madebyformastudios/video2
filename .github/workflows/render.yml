@@ -12,15 +12,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: npm }
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: npm ci || npm install
       - run: python3 scripts/make_audio.py
       - name: Render
         run: npx remotion render src/index.ts Short out/short.mp4 --codec h264 --crf 17 --scale=${{ github.event.inputs.scale || '1' }} --concurrency=100%
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: short
           path: out/short.mp4
