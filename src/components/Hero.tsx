@@ -39,11 +39,24 @@ export const Hero: React.FC<Props> = ({ frame, dist, speed, slouch, band, scale 
   const breathe = Math.sin(frame * 0.06) * 1.4;
   const legColor = character === "hoodie" ? "#2b2e36" : undefined;
 
+  const shoeFill = (far: boolean) => (character === "hoodie" ? (far ? "#c9c4ba" : pal.shoe) : far ? "#a69f8b" : pal.shoe);
   const leg = (l: (typeof pose.legs)[number], far: boolean) => (
     <g key={`l${far}`}>
-      {line(pose.hip, l.knee, l.foot, legColor ? (far ? "#1f2229" : legColor) : far ? pal.limbFar : pal.limb, 15)}
-      <ellipse cx={l.foot.x + 9} cy={l.foot.y - 3} rx={17} ry={8} fill={far ? "#00000033" : "none"} />
-      <ellipse cx={l.foot.x + 8} cy={l.foot.y - 4} rx={16} ry={8} fill={character === "hoodie" ? (far ? "#c9c4ba" : pal.shoe) : far ? "#a69f8b" : pal.shoe} stroke={ink} strokeOpacity={0.5} strokeWidth={2} />
+      {/* per-foot contact shadow, fades as the foot lifts */}
+      <ellipse cx={l.ankle.x + 4} cy={3} rx={20} ry={4} fill="#000" opacity={0.3 * Math.max(0, 1 - l.gap / 26)} />
+      {line(pose.hip, l.knee, l.ankle, legColor ? (far ? "#1f2229" : legColor) : far ? pal.limbFar : pal.limb, 15)}
+      {/* side-view sneaker, rotated about the ankle: toe forward, flat sole */}
+      <g transform={`translate(${l.ankle.x} ${l.ankle.y}) rotate(${l.angle})`}>
+        <path
+          d="M-14 8 L-15 -1 Q-14 -9 -4 -9 L5 -9 Q13 -6 19 0 Q25 4 22 8 Z"
+          fill={shoeFill(far)}
+          stroke={ink}
+          strokeOpacity={0.55}
+          strokeWidth={2.2}
+          strokeLinejoin="round"
+        />
+        <line x1={-14} y1={6} x2={22} y2={6} stroke={ink} strokeOpacity={0.35} strokeWidth={2.4} />
+      </g>
     </g>
   );
   const arm = (a: (typeof pose.arms)[number], far: boolean) => (
@@ -78,7 +91,7 @@ export const Hero: React.FC<Props> = ({ frame, dist, speed, slouch, band, scale 
           <stop offset="1" stopColor="#465a70" />
         </linearGradient>
       </defs>
-      <ellipse cx={6} cy={4} rx={56} ry={9} fill="#000" opacity={0.32} />
+      <ellipse cx={4} cy={4} rx={46} ry={7} fill="#000" opacity={0.14} />
       {leg(farLeg, true)}
       <g transform={`rotate(${pose.lean} 0 ${pose.hip.y})`}>
         {arm(farArm, true)}
